@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // render loop
     while(!glfwWindowShouldClose(window)) {
@@ -32,7 +33,6 @@ int main(int argc, char** argv) {
         processInput(window);
 
         // rendering commands here
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // check and call events and swap the buffers
@@ -51,5 +51,17 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 void processInput(GLFWwindow* window) {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+        glClearColor(0.3f, 0.2f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+        glClearColor(0.3f, 0.3f, 0.2f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
     }
 }
