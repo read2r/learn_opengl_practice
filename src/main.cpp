@@ -36,11 +36,53 @@ int main(int argc, char** argv) {
     }
 
     float vertices[] = {
-        // positions         // texture coords 
-         0.5f,  0.5f, 0.0f,  1.0f, 1.0f, // top right
-         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f,  0.0f, 1.0f, // top left
+        // F
+         0.5f,  0.5f,  0.5f, 1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, 0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f, 0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f, 1.0f, .0f,
+        -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,
+
+        // B
+         0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+         0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f,  -0.5f, 0.0f, 1.0f,
+        -0.5f,  0.5f,  -0.5f, 0.0f, 1.0f,
+         0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,
+        -0.5f, -0.5f,  -0.5f, 0.0f, 0.0f,
+
+        // U
+         0.5f,  0.5f, -0.5f, 1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, 0.0f, 0.0f,
+
+        // D
+         0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,
+
+        // L
+        -0.5f,  0.5f,  0.5f, 1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+        // R
+         0.5f,  0.5f,  0.5f, 1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+         0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
     };
 
     unsigned int indices[] = {
@@ -108,6 +150,8 @@ int main(int argc, char** argv) {
     //mShader.setInt("texture1", 0);
     //mShader.setInt("texture2", 1);
 
+    glEnable(GL_DEPTH_TEST);
+
     // render loop
     while(!glfwWindowShouldClose(window)) {
         // input
@@ -115,7 +159,7 @@ int main(int argc, char** argv) {
 
         // rendering commands here
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         // bind texture
         glActiveTexture(GL_TEXTURE0);
@@ -123,20 +167,25 @@ int main(int argc, char** argv) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        // create transforamtions
-        glm::mat4 trans = glm::mat4(1.0f);
-        //trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
-        //trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
-        //trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
-        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
         // render containter
         mShader.use();
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        unsigned transformLocation = glGetUniformLocation(mShader.ID, "transform");
-        glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        int modelLocation = glGetUniformLocation(mShader.ID, "model");
+        int viewLocation = glGetUniformLocation(mShader.ID, "view");
+        int projectionLocation = glGetUniformLocation(mShader.ID, "projection");
+        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
         //glBindVertexArray(0);
 
         // check and call events and swap the buffers
