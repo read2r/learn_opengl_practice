@@ -13,11 +13,18 @@
 #include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow* window);
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+bool firstMouse = true;
+float yaw = -90.0f;
+float pitch = 0.0f;
+float lastX;
+float lastY;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -36,6 +43,8 @@ int main(int argc, char** argv) {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -192,6 +201,17 @@ int main(int argc, char** argv) {
             glm::vec3(-1.3f,  1.0f, -1.5f)  
         };
 
+        // flying
+
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        int viewLocation = glGetUniformLocation(mShader.ID, "view");
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
+        int projectionLocation = glGetUniformLocation(mShader.ID, "projection");
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
         // render containter
         mShader.use();
         glBindVertexArray(VAO);
@@ -205,16 +225,6 @@ int main(int argc, char** argv) {
             int modelLocation = glGetUniformLocation(mShader.ID, "model");
             glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
         }
-
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
-
-        int viewLocation = glGetUniformLocation(mShader.ID, "view");
-        int projectionLocation = glGetUniformLocation(mShader.ID, "projection");
-        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
         //glBindVertexArray(0);
 
         // check and call events and swap the buffers
@@ -254,4 +264,36 @@ void processInput(GLFWwindow* window) {
     if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
         cameraPos -= cameraUp * cameraSpeed;
     }
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if(firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+
+    const float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw += xoffset;
+    pitch += yoffset;
+
+    if(pitch > 89.0f) {
+        pitch = 89.0f;
+    } else if(pitch < -89.0f) {
+        pitch = -89.0f;
+    }
+
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
 }
