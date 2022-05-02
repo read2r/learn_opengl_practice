@@ -15,6 +15,13 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
 int main(int argc, char** argv) {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -154,6 +161,11 @@ int main(int argc, char** argv) {
 
     // render loop
     while(!glfwWindowShouldClose(window)) {
+        float currentFrame = (float)glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        std::cout << (1.0f / deltaTime) << std::endl;
+
         // input
         processInput(window);
 
@@ -180,13 +192,6 @@ int main(int argc, char** argv) {
             glm::vec3(-1.3f,  1.0f, -1.5f)  
         };
 
-
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
-
         // render containter
         mShader.use();
         glBindVertexArray(VAO);
@@ -200,6 +205,11 @@ int main(int argc, char** argv) {
             int modelLocation = glGetUniformLocation(mShader.ID, "model");
             glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
         }
+
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
         int viewLocation = glGetUniformLocation(mShader.ID, "view");
         int projectionLocation = glGetUniformLocation(mShader.ID, "projection");
@@ -223,5 +233,25 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 void processInput(GLFWwindow* window) {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    const float cameraSpeed = 2.5f * deltaTime;
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        cameraPos += cameraFront * cameraSpeed;
+    }
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        cameraPos -= cameraFront * cameraSpeed;
+    }
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        cameraPos += cameraUp * cameraSpeed;
+    }
+    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        cameraPos -= cameraUp * cameraSpeed;
     }
 }
