@@ -12,6 +12,7 @@ project(${PROJECT_NAME})
 add_executable(${PROJECT_NAME} 
     src/main.cpp 
     src/shader.h
+    src/camera.h
 )
 
 include(Dependency.cmake)

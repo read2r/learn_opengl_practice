@@ -11,22 +11,17 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
+#include "camera.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-bool firstMouse = true;
-float yaw = -90.0f;
-float pitch = 0.0f;
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX;
 float lastY;
-float fov = 45.0f;
+bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -204,16 +199,15 @@ int main(int argc, char** argv) {
             glm::vec3(-1.3f,  1.0f, -1.5f)  
         };
 
-        // flying
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
+        int projectionLocation = glGetUniformLocation(mShader.ID, "projection");
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glm::mat4 view = camera.GetViewMatrix();
         int viewLocation = glGetUniformLocation(mShader.ID, "view");
         glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
-        int projectionLocation = glGetUniformLocation(mShader.ID, "projection");
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
         // render containter
         mShader.use();
         glBindVertexArray(VAO);
@@ -249,31 +243,16 @@ void processInput(GLFWwindow* window) {
 
     const float cameraSpeed = 2.5f * deltaTime;
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        cameraPos += cameraFront * cameraSpeed;
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     }
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        cameraPos -= cameraFront * cameraSpeed;
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     }
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(LEFT, deltaTime);
     }
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
-    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        cameraPos += cameraUp * cameraSpeed;
-    }
-    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-        cameraPos -= cameraUp * cameraSpeed;
-    }
-    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-        fov = 45.0f;
-    }
-    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-        fov = 30.0f;
-    }
-    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
-        fov = 15.0f;
+        camera.ProcessKeyboard(RIGHT, deltaTime);
     }
 }
 
@@ -289,31 +268,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if(pitch > 89.0f) {
-        pitch = 89.0f;
-    } else if(pitch < -89.0f) {
-        pitch = -89.0f;
-    }
-
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
+    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    fov -= (float)yoffset;
-    if(fov < 1.0f) {
-        fov = 1.0f;
-    } else if(fov > 45.0f) {
-        fov = 45.0f;
-    }
+    camera.ProcessMouseScroll(yoffset);
 }
